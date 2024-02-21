@@ -17,6 +17,7 @@ const Player = ({
   songs,
   setSongs,
   id,
+  updateColor
 }) => {
   const dragHandler = (e) => {
     audioRef.current.currentTime = e.target.value;
@@ -48,6 +49,7 @@ const Player = ({
       }
     });
     setSongs(newSongs);
+    updateColor();
   };
 
   const getTime = (time) => {

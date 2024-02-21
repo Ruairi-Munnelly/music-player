@@ -1,10 +1,11 @@
-import React, {useState, useRef} from 'react'
-import data from './data.js';
-import Nav from './components/Navb.js'
-import Song from './components/Song.js';
-import Player from './components/PlayerSong.js';
-import Library from './components/Library.js'
-import './styles/app.scss';
+import React, { useState, useRef, useEffect } from "react";
+import data from "./data.js";
+import Nav from "./components/Navb.js";
+import Song from "./components/Song.js";
+import Player from "./components/PlayerSong.js";
+import Library from "./components/Library.js";
+import "./styles/app.scss";
+import { FastAverageColor } from "fast-average-color";
 
 function App() {
   const [songs, setSongs] = useState(data());
@@ -18,41 +19,75 @@ function App() {
     animationPercentage: 0,
   });
 
-  const timeUpdateHandler = (e) => { 
-    const current = e.target.currentTime; 
-    const duration = e.target.duration;  
-    const roundedCurrent = Math.round(current); 
-    const roundedDuration = Math.round(duration); 
-    const animation = Math.round((roundedCurrent / roundedDuration) * 100); 
-    console.log(); 
-    setSongInfo({ 
-      currentTime: current, 
-      duration, 
-      animationPercentage: animation, 
-    }); 
-  }; 
-  const songEndHandler = async () => { 
-    let currentIndex = songs.findIndex((song) => song.id === currentSong.id); 
-  
-    await setCurrentSong(songs[(currentIndex + 1) % songs.length]); 
-  
-    if (isPlaying) audioRef.current.play(); 
-  }; 
+  const [backgroundColor, setBackgroundColor] = useState(() => {
+    let img = new Image();
+    img.src = currentSong.cover;
+    const fac = new FastAverageColor();
+    fac
+    .getColorAsync(img)
+    .then((color) => {
+      console.log('init-bgcolor:'+ color.hex);
+      return setBackgroundColor(color.hex);
+    })
+  });
+
+  // const [backgroundColor, setBackgroundColor] = useState('#fff');
+
+  const updateColor = () => {
+    const body = document.querySelector("body");
+    const fac = new FastAverageColor();
+    fac
+      .getColorAsync(body.querySelector(".song_cover"))
+      .then((color) => {
+        setBackgroundColor(color.hex);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  };
+
+  useEffect(() => {
+    if (backgroundColor) {
+    const body = document.querySelector("body");
+    body.style.background = `linear-gradient(${backgroundColor}1A, ${backgroundColor})`;
+    body.style.color = backgroundColor.isDark ? "#fff" : "#000";
+    }
+  }, [backgroundColor]);
+
+  const timeUpdateHandler = (e) => {
+    const current = e.target.currentTime;
+    const duration = e.target.duration;
+    const roundedCurrent = Math.round(current);
+    const roundedDuration = Math.round(duration);
+    const animation = Math.round((roundedCurrent / roundedDuration) * 100);
+    setSongInfo({
+      currentTime: current,
+      duration,
+      animationPercentage: animation,
+    });
+  };
+  const songEndHandler = async () => {
+    let currentIndex = songs.findIndex((song) => song.id === currentSong.id);
+
+    await setCurrentSong(songs[(currentIndex + 1) % songs.length]);
+
+    if (isPlaying) audioRef.current.play();
+  };
 
   let navProps = {
     libraryStatus: libraryStatus,
     setLibraryStatus: setLibraryStatus,
-  }
+  };
 
-  let libraryProps = { 
+  let libraryProps = {
     songs: songs,
     isPlaying: isPlaying,
     libraryStatus: libraryStatus,
     setLibraryStatus: setLibraryStatus,
     setSongs: setSongs,
     setCurrentSong: setCurrentSong,
-    audioRef: audioRef
-  }
+    audioRef: audioRef,
+  };
 
   let playerProps = {
     id: songs.id,
@@ -65,37 +100,23 @@ function App() {
     currentSong: currentSong,
     setCurrentSong: setCurrentSong,
     audioRef: audioRef,
-  }
-
-  fetch('/public/audio/cloudkicker_to_scale_not_painted.mp3')
-  .then(res => {
-    if (!res.ok) {
-      throw Error('File not found');
-    } 
-    return res.blob();
-  })
-  .then( myBlob => {
-    console.log(myBlob);
-    const reader = new FileReader();
-      reader.onload = e => {
-        console.log(e.target.result);
-      };
-      reader.readAsDataURL(myBlob);
-  })
+    updateColor: updateColor,
+  };
 
   return (
     <div>
       <Nav {...navProps} />
       <Song currentSong={currentSong} />
-        <Library {...libraryProps} />
+      <Library {...libraryProps} />
       <Player {...playerProps} />
-        <audio 
-        onLoadedMetadata={timeUpdateHandler} 
-        onTimeUpdate={timeUpdateHandler} 
-        src={currentSong.audio} 
-        ref={audioRef} 
-        onEnded={songEndHandler} 
-      ></audio> 
+      <audio
+        onLoadedMetadata={timeUpdateHandler}
+        onTimeUpdate={timeUpdateHandler}
+        src={currentSong.audio}
+        ref={audioRef}
+        onEnded={songEndHandler}
+      ></audio>
+      <button onClick={updateColor}>Cover Colour</button>
     </div>
   );
 }

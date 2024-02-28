@@ -22,9 +22,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-**.mp3
-**.jpeg
-**.jpg
+*.mp3
+*.jpeg
+*.jpg
 
-node_modules
-**/node_modules
+node_modules/

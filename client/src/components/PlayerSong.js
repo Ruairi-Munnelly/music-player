@@ -17,6 +17,8 @@ const Player = ({
   songs,
   setSongs,
   id,
+  updateColor,
+  loop
 }) => {
   const dragHandler = (e) => {
     audioRef.current.currentTime = e.target.value;
@@ -48,6 +50,7 @@ const Player = ({
       }
     });
     setSongs(newSongs);
+    updateColor();
   };
 
   const getTime = (time) => {
@@ -58,11 +61,13 @@ const Player = ({
   const skipTrackHandler = async (direction) => {
     let currentIndex = songs.findIndex((song) => song.id === currentSong.id);
     if (direction === "skip-forward") {
+      if (currentIndex === songs.length -1  && loop === false) { return};
       await setCurrentSong(songs[(currentIndex + 1) % songs.length]);
       activeLibraryHandler(songs[(currentIndex + 1) % songs.length]);
     }
 
     if (direction === "skip-back") {
+      if (currentIndex === 0  && loop === false) { return};
       if ((currentIndex - 1) % songs.length === -1) {
         await setCurrentSong(songs[songs.length - 1]);
         activeLibraryHandler(songs[songs.length - 1]);
